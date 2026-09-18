@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.entity.GameEntity
 import com.example.model.AntiCheatSeverity
 import com.example.ui.MainAppViewModel
+import com.example.ui.dashboard.ControlystPhoneDashboard
 import com.example.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,124 +50,98 @@ fun GameLibraryScreen(
         }
     }
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBackground)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(top = 12.dp, bottom = 90.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Spacer(Modifier.height(12.dp))
-
-        // Search Bar & Add Game button
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag("game_search_field"),
-                placeholder = { Text("Search installed games...", color = TextMuted, fontSize = 14.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextMuted) },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = CyberCyan,
-                    unfocusedBorderColor = DarkSurfaceBorder,
-                    focusedContainerColor = DarkSurface,
-                    unfocusedContainerColor = DarkSurface
-                )
-            )
-
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = CyberCyan,
-                contentColor = Color(0xFF00363D),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .size(52.dp)
-                    .testTag("add_game_fab")
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Game")
-            }
+        // 1. Phone Dashboard matching final.jpeg (Profile Switcher, Telemetry, Performance Modes, Status Pills)
+        item(key = "phone_dashboard") {
+            ControlystPhoneDashboard(viewModel = viewModel)
         }
 
-        Spacer(Modifier.height(14.dp))
-
-        // Active Privilege Status Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
-            border = BorderStroke(1.dp, DarkSurfaceBorder)
-        ) {
+        // 2. Search Bar & Add Game button
+        item(key = "search_and_add") {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(AccentGreen)
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("game_search_field"),
+                    placeholder = { Text("Search installed games...", color = TextMuted, fontSize = 14.sp) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextMuted) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ControlystCyan,
+                        unfocusedBorderColor = DarkSurfaceBorder,
+                        focusedContainerColor = DarkSurface,
+                        unfocusedContainerColor = DarkSurface
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Injection: ${activePrivilege.title}",
-                        color = TextPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = CyberCyan.copy(alpha = 0.15f)
+                )
+
+                FloatingActionButton(
+                    onClick = { showAddDialog = true },
+                    containerColor = ControlystCyan,
+                    contentColor = Color(0xFF00363D),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .size(52.dp)
+                        .testTag("add_game_fab")
                 ) {
-                    Text(
-                        text = activePrivilege.badgeLabel,
-                        color = CyberCyan,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                    Icon(Icons.Default.Add, contentDescription = "Add Game")
                 }
             }
         }
 
-        Spacer(Modifier.height(14.dp))
-
-        // Games List
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = 80.dp)
-        ) {
-            items(filteredGames, key = { it.packageName }) { game ->
-                GameItemCard(
-                    game = game,
-                    isSelected = selectedGame?.packageName == game.packageName,
-                    onSelect = { viewModel.selectGame(game) },
-                    onLaunch = {
-                        // Check if game has anti-cheat high alert warning
-                        if (game.antiCheatSeverity == AntiCheatSeverity.HIGH_ALERT && activePrivilege.requiresRoot) {
-                            safetyWarningGame = game
-                        } else {
-                            viewModel.launchGameWithMapping(game, context)
-                        }
-                    },
-                    onEditMapping = {
-                        viewModel.selectGame(game)
-                        onNavigateToMapper()
-                    }
+        // 3. Section Header for Games Library
+        item(key = "games_header") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Configured Game Profiles",
+                    color = TextPrimary,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${filteredGames.size} Games",
+                    color = ControlystCyan,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
+        }
+
+        // 4. Games List Items
+        items(filteredGames, key = { it.packageName }) { game ->
+            GameItemCard(
+                game = game,
+                isSelected = selectedGame?.packageName == game.packageName,
+                onSelect = { viewModel.selectGame(game) },
+                onLaunch = {
+                    if (game.antiCheatSeverity == AntiCheatSeverity.HIGH_ALERT && activePrivilege.requiresRoot) {
+                        safetyWarningGame = game
+                    } else {
+                        viewModel.launchGameWithMapping(game, context)
+                    }
+                },
+                onEditMapping = {
+                    viewModel.selectGame(game)
+                    onNavigateToMapper()
+                }
+            )
         }
     }
 

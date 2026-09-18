@@ -56,13 +56,32 @@ fun OnboardingScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "Controlyst Setup (${step + 1}/6)",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = CyberCyan
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        ControlystLogoIcon(size = 24.dp)
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            text = "CONTROLYST",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
+                                letterSpacing = 2.sp
+                            )
                         )
-                    )
+                        Spacer(Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = ControlystViolet.copy(alpha = 0.25f),
+                            border = BorderStroke(1.dp, ControlystViolet.copy(alpha = 0.5f))
+                        ) {
+                            Text(
+                                text = "${step + 1}/6",
+                                color = ControlystCyan,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                 },
                 navigationIcon = {
                     if (step > 0) {
@@ -70,7 +89,7 @@ fun OnboardingScreen(
                             onClick = { viewModel.prevOnboardingStep() },
                             modifier = Modifier.testTag("onboarding_back_button")
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                         }
                     }
                 },
@@ -79,10 +98,10 @@ fun OnboardingScreen(
                         onClick = onFinish,
                         modifier = Modifier.testTag("onboarding_skip_button")
                     ) {
-                        Text("Skip Setup", color = TextSecondary)
+                        Text("Skip", color = TextSecondary, fontWeight = FontWeight.SemiBold)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = GraphiteFoundation)
             )
         },
         bottomBar = {
@@ -103,9 +122,12 @@ fun OnboardingScreen(
                         for (i in 0..5) {
                             Box(
                                 modifier = Modifier
-                                    .size(if (i == step) 18.dp else 8.dp, 8.dp)
-                                    .clip(CircleShape)
-                                    .background(if (i == step) CyberCyan else DarkSurfaceBorder)
+                                    .size(if (i == step) 22.dp else 8.dp, 8.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(
+                                        if (i == step) SignatureGradient
+                                        else Brush.linearGradient(listOf(DarkSurfaceBorder, DarkSurfaceBorder))
+                                    )
                             )
                         }
                     }
@@ -118,27 +140,41 @@ fun OnboardingScreen(
                                 onFinish()
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = CyberCyan),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.testTag("onboarding_next_button")
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                        contentPadding = PaddingValues(),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .testTag("onboarding_next_button")
+                            .height(44.dp)
                     ) {
-                        Text(
-                            text = if (step == 5) "Enter Controlyst" else "Continue",
-                            color = Color(0xFF00363D),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = Color(0xFF00363D),
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .background(SignatureGradient, RoundedCornerShape(14.dp))
+                                .padding(horizontal = 20.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (step == 5) "Launch Controlyst" else "Continue",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowForward,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
         },
-        containerColor = DarkBackground
+        containerColor = GraphiteFoundation
     ) { paddingValues ->
         var showWebUiSheet by remember { mutableStateOf(false) }
 
@@ -246,100 +282,152 @@ fun StepWelcome() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
             .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // App Hero Banner
+        Spacer(Modifier.height(12.dp))
+
+        // Controlyst Hero Emblem with Signature Radial Glow
         Box(
             modifier = Modifier
-                .size(110.dp)
-                .clip(RoundedCornerShape(28.dp))
+                .size(116.dp)
+                .clip(RoundedCornerShape(32.dp))
                 .background(
                     Brush.radialGradient(
-                        colors = listOf(CyberCyan.copy(alpha = 0.3f), Color.Transparent)
+                        colors = listOf(ControlystViolet.copy(alpha = 0.35f), Color.Transparent)
                     )
                 )
-                .border(2.dp, CyberCyan, RoundedCornerShape(28.dp)),
+                .border(1.5.dp, Brush.linearGradient(listOf(ControlystViolet, ControlystCyan)), RoundedCornerShape(32.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                Icons.Default.SportsEsports,
-                contentDescription = null,
-                tint = CyberCyan,
-                modifier = Modifier.size(60.dp)
-            )
+            ControlystLogoIcon(size = 72.dp, animated = true)
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
         Text(
-            text = "Welcome to Controlyst",
+            text = "CONTROLYST",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.ExtraBold,
-                color = TextPrimary
+                color = Color.White,
+                letterSpacing = 3.sp
             ),
             textAlign = TextAlign.Center
         )
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(6.dp))
 
         Text(
-            text = "The universal game controller and mouse/keyboard keymapper engineered for both non-root and rooted Android devices.",
-            style = MaterialTheme.typography.bodyLarge.copy(color = TextSecondary),
+            text = "Android Game-Mapping & Performance-Tuning Engine",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = ControlystCyan,
+                fontWeight = FontWeight.SemiBold
+            ),
             textAlign = TextAlign.Center
         )
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(14.dp))
 
-        // Feature Highlights
+        // Color tags (#5043EB, #7C8CFF, #00CFEB) from final.jpeg
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            WelcomeColorTag(label = "#5043EB", name = "Control & AI", color = ControlystViolet)
+            WelcomeColorTag(label = "#7C8CFF", name = "Input Layer", color = ControlystBlue)
+            WelcomeColorTag(label = "#00CFEB", name = "Telemetry HUD", color = ControlystCyan)
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        // 4 Core Architecture Pillars
         FeatureHighlightCard(
-            icon = Icons.Default.Hub,
-            title = "Universal Root Abstraction",
-            desc = "Auto-detects Shizuku, Magisk, KernelSU, APatch, or seamlessly falls back to Accessibility."
+            icon = Icons.Default.Tune,
+            iconTint = ControlystViolet,
+            title = "In-game Mapping Editor",
+            desc = "Floating relative nodes (Tap, Joystick, Camera, Swipe, Macro) that seamlessly blend into the game HUD."
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         FeatureHighlightCard(
-            icon = Icons.Default.CropFree,
-            title = "Screenshot-Based Visual Mapper",
-            desc = "Place virtual buttons, thumbstick zones, and camera swipers directly on your game HUD."
+            icon = Icons.Default.AutoAwesome,
+            iconTint = ControlystCyan,
+            title = "AI-assisted HUD Detection",
+            desc = "Automated scanlines and glowing ghost nodes highlighting on-screen virtual controls."
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         FeatureHighlightCard(
             icon = Icons.Default.CenterFocusStrong,
-            title = "Live Overlay & Crosshair Studio",
-            desc = "In-game draggable quick HUD, customizable tactical reticles, and auto-cleanup on exit."
+            iconTint = ControlystBlue,
+            title = "Crosshair & Live FPS Overlays",
+            desc = "Tactical reticle studio and low-overhead floating performance telemetry (119 FPS, 8.4 ms)."
         )
+        Spacer(Modifier.height(10.dp))
+        FeatureHighlightCard(
+            icon = Icons.Default.Terminal,
+            iconTint = ControlystViolet,
+            title = "Root WebUI Daemon",
+            desc = "Embedded 17-subsystem manager for KernelSU, APatch, and Magisk CPU/GPU/thermal tuning."
+        )
+
+        Spacer(Modifier.height(20.dp))
     }
 }
 
 @Composable
-fun FeatureHighlightCard(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, desc: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        border = BorderStroke(1.dp, DarkSurfaceBorder)
+private fun WelcomeColorTag(label: String, name: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = color.copy(alpha = 0.15f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.45f))
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Spacer(Modifier.width(5.dp))
+            Text(label, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+fun FeatureHighlightCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color = ControlystCyan,
+    title: String,
+    desc: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        border = BorderStroke(1.dp, DarkSurfaceBorder)
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(CyberCyan.copy(alpha = 0.12f)),
+                    .background(iconTint.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = CyberCyan, modifier = Modifier.size(24.dp))
+                Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(14.dp))
             Column {
-                Text(title, fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
-                Spacer(Modifier.height(3.dp))
-                Text(desc, color = TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
+                Text(title, fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 14.sp)
+                Spacer(Modifier.height(2.dp))
+                Text(desc, color = TextSecondary, fontSize = 12.sp, lineHeight = 16.sp)
             }
         }
     }

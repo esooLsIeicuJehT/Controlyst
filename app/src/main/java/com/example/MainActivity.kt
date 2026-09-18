@@ -76,59 +76,36 @@ class MainActivity : ComponentActivity() {
                             TopAppBar(
                                 title = {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(10.dp)
-                                                .clip(CircleShape)
-                                                .background(CyberCyan)
+                                        ControlystLogoIcon(
+                                            modifier = Modifier.size(26.dp),
+                                            size = 26.dp,
+                                            animated = true
                                         )
-                                        Spacer(Modifier.width(8.dp))
+                                        Spacer(Modifier.width(10.dp))
                                         Text(
-                                            text = "Controlyst",
-                                            fontWeight = FontWeight.ExtraBold,
+                                            text = "CONTROLYST",
+                                            fontWeight = FontWeight.Black,
                                             color = TextPrimary,
-                                            fontSize = 18.sp
+                                            fontSize = 17.sp,
+                                            letterSpacing = 3.sp
                                         )
                                         Spacer(Modifier.width(8.dp))
                                         Surface(
-                                            shape = RoundedCornerShape(4.dp),
-                                            color = CyberCyan.copy(alpha = 0.15f)
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = ControlystCyan.copy(alpha = 0.15f),
+                                            border = BorderStroke(1.dp, ControlystCyan.copy(alpha = 0.4f))
                                         ) {
                                             Text(
                                                 text = activePrivilege.badgeLabel,
-                                                color = CyberCyan,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
+                                                color = ControlystCyan,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.ExtraBold,
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                         }
                                     }
                                 },
                                 actions = {
-                                    // Root WebUI & Kernel Daemon Dashboard
-                                    IconButton(
-                                        onClick = { viewModel.selectTab("root_webui") },
-                                        modifier = Modifier.testTag("appbar_root_webui_button")
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Terminal,
-                                            contentDescription = "Root WebUI Daemon",
-                                            tint = CyberCyan
-                                        )
-                                    }
-
-                                    // Shizuku Wireless Pairing Helper Quick Action
-                                    IconButton(
-                                        onClick = { viewModel.startShizukuPairingHelper(5555) },
-                                        modifier = Modifier.testTag("appbar_shizuku_pairing_button")
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Wifi,
-                                            contentDescription = "Shizuku Wireless Pairing Helper",
-                                            tint = AccentGreen
-                                        )
-                                    }
-
                                     // Panic Kill-Switch in App Bar
                                     IconButton(
                                         onClick = {
@@ -144,30 +121,6 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
 
-                                    // Macro Timeline Editor
-                                    IconButton(
-                                        onClick = { viewModel.selectTab("macro") },
-                                        modifier = Modifier.testTag("appbar_macro_button")
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Timeline,
-                                            contentDescription = "Macro Timeline",
-                                            tint = CyberCyan
-                                        )
-                                    }
-
-                                    // Anti-Cheat & Safety Hub
-                                    IconButton(
-                                        onClick = { viewModel.selectTab("safety") },
-                                        modifier = Modifier.testTag("appbar_safety_button")
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Security,
-                                            contentDescription = "Anti-Cheat Safety Hub",
-                                            tint = AccentGreen
-                                        )
-                                    }
-
                                     // Reset/Restart Onboarding button
                                     IconButton(
                                         onClick = { viewModel.restartOnboarding() },
@@ -180,7 +133,7 @@ class MainActivity : ComponentActivity() {
                                         )
                                     }
                                 },
-                                colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
+                                colors = TopAppBarDefaults.topAppBarColors(containerColor = GraphiteFoundation)
                             )
                         },
                         bottomBar = {
@@ -192,14 +145,14 @@ class MainActivity : ComponentActivity() {
                                 NavigationBarItem(
                                     selected = currentTab == "library",
                                     onClick = { viewModel.selectTab("library") },
-                                    icon = { Icon(Icons.Default.SportsEsports, contentDescription = "Library") },
-                                    label = { Text("Library", fontSize = 11.sp) },
+                                    icon = { Icon(Icons.Default.Dashboard, contentDescription = "Dashboard") },
+                                    label = { Text("Dashboard", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = CyberCyan,
-                                        selectedTextColor = CyberCyan,
+                                        selectedIconColor = ControlystCyan,
+                                        selectedTextColor = ControlystCyan,
                                         unselectedIconColor = TextMuted,
                                         unselectedTextColor = TextMuted,
-                                        indicatorColor = CyberCyan.copy(alpha = 0.15f)
+                                        indicatorColor = ControlystViolet.copy(alpha = 0.25f)
                                     ),
                                     modifier = Modifier.testTag("tab_library")
                                 )
@@ -208,13 +161,13 @@ class MainActivity : ComponentActivity() {
                                     selected = currentTab == "mapper",
                                     onClick = { viewModel.selectTab("mapper") },
                                     icon = { Icon(Icons.Default.Tune, contentDescription = "Mapper") },
-                                    label = { Text("Mapper", fontSize = 11.sp) },
+                                    label = { Text("Mapper", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = CyberCyan,
-                                        selectedTextColor = CyberCyan,
+                                        selectedIconColor = ControlystCyan,
+                                        selectedTextColor = ControlystCyan,
                                         unselectedIconColor = TextMuted,
                                         unselectedTextColor = TextMuted,
-                                        indicatorColor = CyberCyan.copy(alpha = 0.15f)
+                                        indicatorColor = ControlystViolet.copy(alpha = 0.25f)
                                     ),
                                     modifier = Modifier.testTag("tab_mapper")
                                 )
@@ -222,61 +175,31 @@ class MainActivity : ComponentActivity() {
                                 NavigationBarItem(
                                     selected = currentTab == "crosshair",
                                     onClick = { viewModel.selectTab("crosshair") },
-                                    icon = { Icon(Icons.Default.CenterFocusStrong, contentDescription = "Crosshair") },
-                                    label = { Text("Reticle", fontSize = 11.sp) },
+                                    icon = { Icon(Icons.Default.CenterFocusStrong, contentDescription = "Overlays") },
+                                    label = { Text("Overlays", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = CyberCyan,
-                                        selectedTextColor = CyberCyan,
+                                        selectedIconColor = ControlystCyan,
+                                        selectedTextColor = ControlystCyan,
                                         unselectedIconColor = TextMuted,
                                         unselectedTextColor = TextMuted,
-                                        indicatorColor = CyberCyan.copy(alpha = 0.15f)
+                                        indicatorColor = ControlystViolet.copy(alpha = 0.25f)
                                     ),
                                     modifier = Modifier.testTag("tab_crosshair")
                                 )
 
                                 NavigationBarItem(
-                                    selected = currentTab == "calibration",
-                                    onClick = { viewModel.selectTab("calibration") },
-                                    icon = { Icon(Icons.Default.Speed, contentDescription = "Calibrate") },
-                                    label = { Text("Calibrate", fontSize = 11.sp) },
+                                    selected = currentTab == "root_webui",
+                                    onClick = { viewModel.selectTab("root_webui") },
+                                    icon = { Icon(Icons.Default.Terminal, contentDescription = "Root WebUI") },
+                                    label = { Text("Root WebUI", fontSize = 11.sp, fontWeight = FontWeight.SemiBold) },
                                     colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = CyberCyan,
-                                        selectedTextColor = CyberCyan,
+                                        selectedIconColor = ControlystCyan,
+                                        selectedTextColor = ControlystCyan,
                                         unselectedIconColor = TextMuted,
                                         unselectedTextColor = TextMuted,
-                                        indicatorColor = CyberCyan.copy(alpha = 0.15f)
+                                        indicatorColor = ControlystViolet.copy(alpha = 0.25f)
                                     ),
-                                    modifier = Modifier.testTag("tab_calibration")
-                                )
-
-                                NavigationBarItem(
-                                    selected = currentTab == "community",
-                                    onClick = { viewModel.selectTab("community") },
-                                    icon = { Icon(Icons.Default.Share, contentDescription = "Community") },
-                                    label = { Text("Configs", fontSize = 11.sp) },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = CyberCyan,
-                                        selectedTextColor = CyberCyan,
-                                        unselectedIconColor = TextMuted,
-                                        unselectedTextColor = TextMuted,
-                                        indicatorColor = CyberCyan.copy(alpha = 0.15f)
-                                    ),
-                                    modifier = Modifier.testTag("tab_community")
-                                )
-
-                                NavigationBarItem(
-                                    selected = currentTab == "vip",
-                                    onClick = { viewModel.selectTab("vip") },
-                                    icon = { Icon(Icons.Default.WorkspacePremium, contentDescription = "VIP") },
-                                    label = { Text("VIP", fontSize = 11.sp) },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = CyberCyan,
-                                        selectedTextColor = CyberCyan,
-                                        unselectedIconColor = TextMuted,
-                                        unselectedTextColor = TextMuted,
-                                        indicatorColor = CyberCyan.copy(alpha = 0.15f)
-                                    ),
-                                    modifier = Modifier.testTag("tab_vip")
+                                    modifier = Modifier.testTag("tab_root_webui")
                                 )
                             }
                         },

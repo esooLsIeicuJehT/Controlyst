@@ -188,10 +188,10 @@ fun KernelSuWebUiScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(480.dp),
-                shape = RoundedCornerShape(14.dp),
+                    .height(580.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
-                border = BorderStroke(1.5.dp, CyberCyan.copy(alpha = 0.6f))
+                border = BorderStroke(1.5.dp, ControlystCyan.copy(alpha = 0.5f))
             ) {
                 AndroidView(
                     factory = { ctx ->
@@ -201,7 +201,7 @@ fun KernelSuWebUiScreen(
                             settings.cacheMode = WebSettings.LOAD_NO_CACHE
                             webChromeClient = WebChromeClient()
                             webViewClient = WebViewClient()
-                            setBackgroundColor(android.graphics.Color.parseColor("#0A0E17"))
+                            setBackgroundColor(android.graphics.Color.parseColor("#090B10"))
                             loadDataWithBaseURL(
                                 "https://controlyst.internal",
                                 KernelSuModuleManager.getWebUiHtml(),

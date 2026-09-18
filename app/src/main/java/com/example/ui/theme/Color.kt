@@ -1,19 +1,32 @@
 package com.example.ui.theme
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-val CyberCyan = Color(0xFF00F0FF)
-val NeonCyanLight = Color(0xFF38BDF8)
-val ElectricViolet = Color(0xFFA855F7)
-val DeepIndigo = Color(0xFF6366F1)
-val DarkBackground = Color(0xFF0A0E17)
-val DarkSurface = Color(0xFF111827)
-val DarkSurfaceElevated = Color(0xFF1B2436)
-val DarkSurfaceBorder = Color(0xFF2E3A52)
+// Foundation & Suggested Tones from Design Spec (#090B10 Foundation)
+val GraphiteFoundation = Color(0xFF090B10)
+val DarkBackground = GraphiteFoundation
+val DarkSurface = Color(0xFF131722)
+val DarkSurfaceElevated = Color(0xFF1A1F2E)
+val DarkSurfaceBorder = Color(0xFF272F44)
 
-val AccentGreen = Color(0xFF10B981)
-val AccentAmber = Color(0xFFF59E0B)
-val AccentRose = Color(0xFFF43F5E)
+// Brand & Interaction Palette
+val ControlystViolet = Color(0xFF5043EB) // Controlyst, intelligence, AI, selected interaction
+val ControlystVioletLight = Color(0xFF8A98FF)
+val ControlystBlue = Color(0xFF7C8CFF)   // Mapping/input
+val ControlystCyan = Color(0xFF00CFEB)   // Measurable hardware performance and telemetry
+val ControlystGreen = Color(0xFF00E676)  // Healthy/connected/success
+val ControlystOrange = Color(0xFFFF9100) // Attention warranted (only when needed)
+val ControlystRed = Color(0xFFFF1744)    // Genuine danger, failure, or conflict only
+
+// Aliases for compatibility
+val CyberCyan = ControlystCyan
+val NeonCyanLight = Color(0xFF38BDF8)
+val ElectricViolet = ControlystViolet
+val DeepIndigo = Color(0xFF6366F1)
+val AccentGreen = ControlystGreen
+val AccentAmber = ControlystOrange
+val AccentRose = ControlystRed
 
 val TextPrimary = Color(0xFFF8FAFC)
 val TextSecondary = Color(0xFF94A3B8)
@@ -21,3 +34,20 @@ val TextMuted = Color(0xFF64748B)
 
 val DarkTextPrimary = TextPrimary
 val DarkTextSecondary = TextSecondary
+
+// The Signature Gradient (#5043EB -> #7C8CFF -> #00CFEB)
+val SignatureGradient = Brush.horizontalGradient(
+    listOf(
+        ControlystViolet,
+        ControlystBlue,
+        ControlystCyan
+    )
+)
+
+val SignatureGradientVertical = Brush.verticalGradient(
+    listOf(
+        ControlystViolet,
+        ControlystBlue,
+        ControlystCyan
+    )
+)

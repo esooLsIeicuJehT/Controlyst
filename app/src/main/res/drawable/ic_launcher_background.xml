@@ -1,34 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- #090B10 Graphite Foundation -->
     <path
-        android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="0"
-                android:startY="0"
-                android:endX="108"
-                android:endY="108"
-                android:type="linear">
-                <item android:offset="0.0" android:color="#0D1117" />
-                <item android:offset="0.5" android:color="#161B26" />
-                <item android:offset="1.0" android:color="#1A102F" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <!-- Subtle Hex/Grid Pattern -->
+        android:pathData="M0,0h108v108h-108z"
+        android:fillColor="#090B10" />
+
+    <!-- Subtle circular concentric tech grid -->
     <path
-        android:pathData="M54,18 L90,38 L90,70 L54,90 L18,70 L18,38 Z"
+        android:pathData="M54,54 m-42,0 a42,42 0 1,0 84,0 a42,42 0 1,0 -84,0"
         android:strokeWidth="1.2"
-        android:strokeColor="#1E293B"
+        android:strokeColor="#171C2B"
         android:fillColor="#00000000" />
     <path
-        android:pathData="M54,26 L82,42 L82,66 L54,82 L26,66 L26,42 Z"
-        android:strokeWidth="0.8"
-        android:strokeColor="#2E1065"
+        android:pathData="M54,54 m-30,0 a30,30 0 1,0 60,0 a30,30 0 1,0 -60,0"
+        android:strokeWidth="1.0"
+        android:strokeColor="#20273D"
         android:fillColor="#00000000" />
 </vector>
+

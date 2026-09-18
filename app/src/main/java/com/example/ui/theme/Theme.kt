@@ -6,23 +6,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val ControlystColorScheme = darkColorScheme(
-    primary = CyberCyan,
+    primary = ControlystCyan,
     onPrimary = Color(0xFF00363D),
-    primaryContainer = Color(0xFF004F58),
-    onPrimaryContainer = Color(0xFF97F0FF),
-    secondary = ElectricViolet,
-    onSecondary = Color(0xFF381E72),
-    secondaryContainer = Color(0xFF4F378B),
-    onSecondaryContainer = Color(0xFFEADDFF),
-    tertiary = NeonCyanLight,
-    background = DarkBackground,
+    primaryContainer = Color(0xFF1E2235),
+    onPrimaryContainer = ControlystCyan,
+    secondary = ControlystViolet,
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFF282548),
+    onSecondaryContainer = ControlystBlue,
+    tertiary = ControlystBlue,
+    background = GraphiteFoundation,
     onBackground = TextPrimary,
     surface = DarkSurface,
     onSurface = TextPrimary,
     surfaceVariant = DarkSurfaceElevated,
     onSurfaceVariant = TextSecondary,
     outline = DarkSurfaceBorder,
-    error = AccentRose,
+    error = ControlystRed,
     onError = Color.White
 )
 
