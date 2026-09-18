@@ -39,7 +39,8 @@ fun FloatingOverlayHUD(
     viewModel: MainAppViewModel,
     onOpenMapper: () -> Unit,
     onOpenCrosshair: () -> Unit,
-    onOpenCalibration: () -> Unit
+    onOpenCalibration: () -> Unit,
+    onOpenRootWebUi: (() -> Unit)? = null
 ) {
     var offsetX by remember { mutableFloatStateOf(20f) }
     var offsetY by remember { mutableFloatStateOf(250f) }
@@ -144,6 +145,17 @@ fun FloatingOverlayHUD(
                             onOpenCalibration()
                         }
                     )
+
+                    onOpenRootWebUi?.let { openWebUi ->
+                        QuickMenuItem(
+                            icon = Icons.Default.Terminal,
+                            title = "Root WebUI Daemon",
+                            onClick = {
+                                isMenuOpen = false
+                                openWebUi()
+                            }
+                        )
+                    }
 
                     HorizontalDivider(color = DarkSurfaceBorder, modifier = Modifier.padding(vertical = 6.dp))
 

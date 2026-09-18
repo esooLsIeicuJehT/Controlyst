@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.example.model.ControllerType
 import com.example.model.PrivilegeMethod
 import com.example.ui.MainAppViewModel
+import com.example.ui.root.KernelSuWebUiScreen
 import com.example.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -139,6 +140,8 @@ fun OnboardingScreen(
         },
         containerColor = DarkBackground
     ) { paddingValues ->
+        var showWebUiSheet by remember { mutableStateOf(false) }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -147,9 +150,11 @@ fun OnboardingScreen(
             when (step) {
                 0 -> StepWelcome()
                 1 -> StepRootDetection(
+                    viewModel = viewModel,
                     results = privilegeResults,
                     selectedMethod = activeMethod,
-                    onSelectMethod = { viewModel.overridePrivilegeMethod(it) }
+                    onSelectMethod = { viewModel.overridePrivilegeMethod(it) },
+                    onOpenWebUi = { showWebUiSheet = true }
                 )
                 2 -> StepPermissions(
                     onOpenRationale = { showRationaleDialog = it }
@@ -161,6 +166,20 @@ fun OnboardingScreen(
                 )
                 4 -> StepCalibrationWalkthrough(viewModel = viewModel)
                 5 -> StepMappingTutorial(viewModel = viewModel)
+            }
+
+            if (showWebUiSheet) {
+                androidx.compose.ui.window.Dialog(
+                    onDismissRequest = { showWebUiSheet = false },
+                    properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        KernelSuWebUiScreen(
+                            viewModel = viewModel,
+                            onBack = { showWebUiSheet = false }
+                        )
+                    }
+                }
             }
         }
     }
@@ -328,10 +347,17 @@ fun FeatureHighlightCard(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 
 @Composable
 fun StepRootDetection(
+    viewModel: MainAppViewModel,
     results: List<com.example.injector.PrivilegeProbeResult>,
     selectedMethod: PrivilegeMethod,
-    onSelectMethod: (PrivilegeMethod) -> Unit
+    onSelectMethod: (PrivilegeMethod) -> Unit,
+    onOpenWebUi: () -> Unit
 ) {
+    val context = LocalContext.current
+    val shizukuPairingState by viewModel.shizukuPairingState.collectAsState()
+    var inlineCodeInput by remember { mutableStateOf("") }
+    var inlinePortInput by remember { mutableStateOf("5555") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -417,6 +443,187 @@ fun StepRootDetection(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
+                    }
+
+                    // Special Shizuku Wireless Debugging Inline Notification Flow
+                    if (probe.method == PrivilegeMethod.SHIZUKU && isSelected) {
+                        Spacer(Modifier.height(14.dp))
+                        HorizontalDivider(color = DarkSurfaceBorder)
+                        Spacer(Modifier.height(14.dp))
+
+                        Text(
+                            text = "Shizuku Wireless Debugging Helper",
+                            fontWeight = FontWeight.Bold,
+                            color = CyberCyan,
+                            fontSize = 14.sp
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Notice: Switching away from Developer Options cancels and resets the 6-digit wireless pairing code! Controlyst posts an interactive notification with an inline text box so you can submit the code directly from the notification shade without leaving Developer Options.",
+                            color = TextSecondary,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp
+                        )
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (shizukuPairingState.isPairingSuccessful) AccentGreen.copy(alpha = 0.15f)
+                                   else if (shizukuPairingState.isHelperNotificationActive) CyberCyan.copy(alpha = 0.15f)
+                                   else Color(0xFF1E293B),
+                            border = BorderStroke(1.dp, if (shizukuPairingState.isPairingSuccessful) AccentGreen else DarkSurfaceBorder),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    if (shizukuPairingState.isPairingSuccessful) Icons.Default.CheckCircle
+                                    else if (shizukuPairingState.isHelperNotificationActive) Icons.Default.NotificationsActive
+                                    else Icons.Default.Info,
+                                    contentDescription = null,
+                                    tint = if (shizukuPairingState.isPairingSuccessful) AccentGreen
+                                           else if (shizukuPairingState.isHelperNotificationActive) CyberCyan
+                                           else TextMuted,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    text = shizukuPairingState.statusMessage,
+                                    color = if (shizukuPairingState.isPairingSuccessful) AccentGreen else TextPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    val port = inlinePortInput.toIntOrNull() ?: 5555
+                                    viewModel.startShizukuPairingHelper(port)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberCyan),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Notifications, contentDescription = null, tint = Color(0xFF00363D), modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Start Notification Helper", color = Color(0xFF00363D), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            OutlinedButton(
+                                onClick = {
+                                    val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    context.startActivity(intent)
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.DeveloperMode, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Open Dev Options", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+
+                        // In-App direct input option
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = inlineCodeInput,
+                                onValueChange = { if (it.length <= 6) inlineCodeInput = it },
+                                placeholder = { Text("Or enter 6 digits here", fontSize = 12.sp) },
+                                singleLine = true,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                textStyle = MaterialTheme.typography.bodySmall.copy(color = TextPrimary)
+                            )
+                            Button(
+                                onClick = {
+                                    if (inlineCodeInput.isNotBlank()) {
+                                        val port = inlinePortInput.toIntOrNull() ?: 5555
+                                        viewModel.submitShizukuPairingCode(inlineCodeInput, port)
+                                    }
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = ElectricViolet)
+                            ) {
+                                Text("Pair", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
+                    }
+
+                    // Special KernelSU / APatch / Magisk Root Module & WebUI Flow
+                    if ((probe.method == PrivilegeMethod.KERNELSU || probe.method == PrivilegeMethod.APATCH || probe.method == PrivilegeMethod.MAGISK) && isSelected) {
+                        Spacer(Modifier.height(14.dp))
+                        HorizontalDivider(color = DarkSurfaceBorder)
+                        Spacer(Modifier.height(14.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "KernelSU / Root WebUI & Module",
+                                    fontWeight = FontWeight.Bold,
+                                    color = CyberCyan,
+                                    fontSize = 14.sp
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = "Controlyst includes a universal /dev/uinput Kernel module with 1000Hz polling and native WebUI dashboard for KernelSU & APatch.",
+                                    color = TextSecondary,
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = onOpenWebUi,
+                                colors = ButtonDefaults.buttonColors(containerColor = CyberCyan),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.Web, contentDescription = null, tint = Color(0xFF00363D), modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Open Root WebUI", color = Color(0xFF00363D), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            OutlinedButton(
+                                onClick = onOpenWebUi,
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = ElectricViolet),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.SettingsSystemDaydream, contentDescription = null, tint = ElectricViolet, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Module Manager", color = ElectricViolet, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }

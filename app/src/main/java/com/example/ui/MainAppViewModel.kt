@@ -31,6 +31,9 @@ import com.example.model.PrivilegeMethod
 import com.example.monetization.MonetizationManager
 import com.example.monetization.MonetizationState
 import com.example.service.MappingForegroundService
+import com.example.service.ShizukuPairingManager
+import com.example.service.ShizukuPairingState
+import com.example.module.KernelSuModuleManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -278,6 +281,21 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
             val res = calibrationManager.measureTouchLatency(currentInjector)
             onComplete(res)
         }
+    }
+
+    val shizukuPairingState: StateFlow<ShizukuPairingState> = ShizukuPairingManager.pairingState
+
+    fun startShizukuPairingHelper(port: Int = 5555) {
+        ShizukuPairingManager.showPairingNotification(getApplication(), port)
+        showSnack("Pairing Notification posted! Enter code directly in notification.")
+    }
+
+    fun dismissShizukuPairingHelper() {
+        ShizukuPairingManager.dismissHelper(getApplication())
+    }
+
+    fun submitShizukuPairingCode(code: String, port: Int = 5555) {
+        ShizukuPairingManager.handlePairingCodeReceived(getApplication(), code, port)
     }
 
     // Onboarding Navigation

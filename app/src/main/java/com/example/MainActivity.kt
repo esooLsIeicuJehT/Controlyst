@@ -32,6 +32,7 @@ import com.example.ui.library.GameLibraryScreen
 import com.example.ui.mapper.ScreenshotMapperScreen
 import com.example.ui.onboarding.OnboardingScreen
 import com.example.ui.overlay.FloatingOverlayHUD
+import com.example.ui.root.KernelSuWebUiScreen
 import com.example.ui.theme.*
 import com.example.ui.vip.VipMonetizationScreen
 
@@ -102,6 +103,30 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 actions = {
+                                    // Root WebUI & Kernel Daemon Dashboard
+                                    IconButton(
+                                        onClick = { viewModel.selectTab("root_webui") },
+                                        modifier = Modifier.testTag("appbar_root_webui_button")
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Terminal,
+                                            contentDescription = "Root WebUI Daemon",
+                                            tint = CyberCyan
+                                        )
+                                    }
+
+                                    // Shizuku Wireless Pairing Helper Quick Action
+                                    IconButton(
+                                        onClick = { viewModel.startShizukuPairingHelper(5555) },
+                                        modifier = Modifier.testTag("appbar_shizuku_pairing_button")
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Wifi,
+                                            contentDescription = "Shizuku Wireless Pairing Helper",
+                                            tint = AccentGreen
+                                        )
+                                    }
+
                                     // Panic Kill-Switch in App Bar
                                     IconButton(
                                         onClick = {
@@ -247,6 +272,10 @@ class MainActivity : ComponentActivity() {
                                 "calibration" -> CalibrationScreen(viewModel = viewModel)
                                 "community" -> CommunityShareScreen(viewModel = viewModel)
                                 "vip" -> VipMonetizationScreen(viewModel = viewModel)
+                                "root_webui" -> KernelSuWebUiScreen(
+                                    viewModel = viewModel,
+                                    onBack = { viewModel.selectTab("library") }
+                                )
                             }
 
                             // Interactive In-App Floating Overlay HUD Preview
@@ -254,7 +283,8 @@ class MainActivity : ComponentActivity() {
                                 viewModel = viewModel,
                                 onOpenMapper = { viewModel.selectTab("mapper") },
                                 onOpenCrosshair = { viewModel.selectTab("crosshair") },
-                                onOpenCalibration = { viewModel.selectTab("calibration") }
+                                onOpenCalibration = { viewModel.selectTab("calibration") },
+                                onOpenRootWebUi = { viewModel.selectTab("root_webui") }
                             )
                         }
                     }

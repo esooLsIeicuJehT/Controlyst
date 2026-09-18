@@ -66,4 +66,33 @@ class ExampleRobolectricTest {
         assertEquals(originalConfig.buttons.size, deserialized.buttons.size)
         assertEquals(originalConfig.crosshair.shape, deserialized.crosshair.shape)
     }
+
+    @Test
+    fun `verify Shizuku pairing manager rejects non-6-digit code and accepts valid code`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        com.example.service.ShizukuPairingManager.showPairingNotification(context, 5555)
+
+        assertTrue(com.example.service.ShizukuPairingManager.pairingState.value.isHelperNotificationActive)
+
+        // Invalid code test
+        com.example.service.ShizukuPairingManager.handlePairingCodeReceived(context, "123", 5555)
+        assertFalse(com.example.service.ShizukuPairingManager.pairingState.value.isPairingSuccessful)
+
+        // Valid 6-digit code test
+        com.example.service.ShizukuPairingManager.handlePairingCodeReceived(context, "987654", 5555)
+        assertTrue(com.example.service.ShizukuPairingManager.pairingState.value.isPairingSuccessful)
+        assertEquals("987654", com.example.service.ShizukuPairingManager.pairingState.value.lastEnteredCode)
+    }
+
+    @Test
+    fun `verify KernelSU module metadata and WebUI HTML content generation`() {
+        val prop = com.example.module.KernelSuModuleManager.getModuleProp()
+        assertTrue(prop.contains("id=controlyst_uinput"))
+        assertTrue(prop.contains("webroot=webroot"))
+
+        val webUiHtml = com.example.module.KernelSuModuleManager.getWebUiHtml()
+        assertTrue(webUiHtml.contains("Controlyst WebUI"))
+        assertTrue(webUiHtml.contains("/dev/uinput"))
+        assertTrue(webUiHtml.contains("1000 Hz"))
+    }
 }
