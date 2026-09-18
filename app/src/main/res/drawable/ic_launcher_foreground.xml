@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Center Reticle ring -->
+    <path
+        android:pathData="M54,34 A20,20 0 1,1 53.9,34"
+        android:strokeWidth="1.5"
+        android:strokeColor="#38BDF8"
+        android:strokeAlpha="0.4"
+        android:fillColor="#00000000" />
+
+    <!-- Gamepad Body Silhouette -->
+    <path
+        android:pathData="M34,42 C30,42 27,45 26,50 L23,65 C22,70 25,75 30,75 C34,75 37,71 39,66 L42,60 C46,58 62,58 66,60 L69,66 C71,71 74,75 78,75 C83,75 86,70 85,65 L82,50 C81,45 78,42 74,42 C67,42 62,45 54,45 C46,45 41,42 34,42 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="23"
+                android:startY="42"
+                android:endX="85"
+                android:endY="75"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#0284C7" />
+                <item android:offset="0.5" android:color="#6366F1" />
+                <item android:offset="1.0" android:color="#8B5CF6" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- D-Pad Left -->
+    <path
+        android:pathData="M32,49 L36,49 L36,53 L32,53 Z M30,51 L38,51"
+        android:strokeWidth="2.5"
+        android:strokeColor="#FFFFFF"
+        android:fillColor="#FFFFFF" />
+
+    <!-- Action Buttons Right (Diamond) -->
+    <!-- X/Y/A/B Nodes -->
+    <path
+        android:pathData="M74,48 A2,2 0 1,1 73.9,48"
+        android:fillColor="#38BDF8" />
+    <path
+        android:pathData="M78,52 A2,2 0 1,1 77.9,52"
+        android:fillColor="#F43F5E" />
+    <path
+        android:pathData="M74,56 A2,2 0 1,1 73.9,56"
+        android:fillColor="#10B981" />
+    <path
+        android:pathData="M70,52 A2,2 0 1,1 69.9,52"
+        android:fillColor="#FBBF24" />
+
+    <!-- Analog Thumbstick Nodes -->
+    <path
+        android:pathData="M44,56 A4,4 0 1,1 43.9,56"
+        android:fillColor="#1E1B4B"
+        android:strokeWidth="1.2"
+        android:strokeColor="#38BDF8" />
+    <path
+        android:pathData="M64,56 A4,4 0 1,1 63.9,56"
+        android:fillColor="#1E1B4B"
+        android:strokeWidth="1.2"
+        android:strokeColor="#A855F7" />
+
+    <!-- Crosshair Aim Marker overlay -->
+    <path
+        android:pathData="M54,30 L54,36 M54,72 L54,78 M30,54 L36,54 M72,54 L78,54"
+        android:strokeWidth="2"
+        android:strokeColor="#22D3EE" />
+
+    <!-- Center Pulse Core -->
+    <path
+        android:pathData="M54,54 A3,3 0 1,1 53.9,54"
+        android:fillColor="#00F0FF" />
+</vector>
