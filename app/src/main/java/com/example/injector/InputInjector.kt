@@ -14,5 +14,9 @@ interface InputInjector {
 
     fun injectKeyEvent(keyCode: Int, action: Int): Boolean
 
+    fun releaseAll() {
+        cleanup()
+    }
+
     fun cleanup()
 }

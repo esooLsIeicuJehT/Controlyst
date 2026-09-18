@@ -33,7 +33,14 @@ import com.example.monetization.MonetizationState
 import com.example.service.MappingForegroundService
 import com.example.service.ShizukuPairingManager
 import com.example.service.ShizukuPairingState
+import com.example.service.PanicKillSwitch
 import com.example.module.KernelSuModuleManager
+import com.example.model.*
+import com.example.ai.vision.AiHudDetector
+import com.example.ai.AiMappingAssistant
+import com.example.ai.ConfigDiffEngine
+import com.example.backup.LocalBackupManager
+import com.example.performance.drivers.PerformanceDriverManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -48,6 +55,23 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
     val privilegeDetector = PrivilegeDetector(application)
     val calibrationManager = CalibrationManager(application)
     val monetizationManager = MonetizationManager(application)
+
+    // AI & HUD Recognition States
+    private val _aiHudCandidates = MutableStateFlow<List<AiHudCandidate>>(emptyList())
+    val aiHudCandidates: StateFlow<List<AiHudCandidate>> = _aiHudCandidates.asStateFlow()
+
+    private val _aiMappingSuggestion = MutableStateFlow<AiMappingSuggestion?>(null)
+    val aiMappingSuggestion: StateFlow<AiMappingSuggestion?> = _aiMappingSuggestion.asStateFlow()
+
+    private val _diffResult = MutableStateFlow<ConfigDiffResult?>(null)
+    val diffResult: StateFlow<ConfigDiffResult?> = _diffResult.asStateFlow()
+
+    val performanceMode = PerformanceDriverManager.currentMode
+    val hardwareTelemetry = PerformanceDriverManager.telemetry
+
+    init {
+        PerformanceDriverManager.initialize()
+    }
 
     // Games and Profiles Flow
     val games: StateFlow<List<GameEntity>> = repository.allGames
@@ -311,6 +335,106 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
         if (_onboardingStep.value > 0) {
             _onboardingStep.value -= 1
         }
+    }
+
+    fun triggerPanicKillSwitch() {
+        val count = PanicKillSwitch.trigger(getApplication(), currentInjector)
+        showSnack("PANIC KILL-SWITCH: Released $count active inputs & reset axes!")
+    }
+
+    fun runAiHudScan() {
+        viewModelScope.launch {
+            val candidates = AiHudDetector.detectHudElements(null)
+            _aiHudCandidates.value = candidates
+            showSnack("AI Vision found ${candidates.size} HUD candidates! Review & confirm.")
+        }
+    }
+
+    fun confirmAiHudCandidates(candidates: List<AiHudCandidate>) {
+        val newNodes = candidates.map { c ->
+            MappingNode(
+                id = c.id,
+                xNorm = c.xNorm,
+                yNorm = c.yNorm,
+                radiusNorm = 0.055f,
+                type = if (c.recommendedKey == "LS" || c.recommendedKey == "RS") NodeType.JOYSTICK_ZONE else NodeType.BUTTON,
+                boundKey = c.recommendedKey,
+                label = c.predictedAction
+            )
+        }
+        val combined = _activeConfig.value.buttons.toMutableList()
+        newNodes.forEach { n ->
+            combined.removeAll { it.id == n.id }
+            combined.add(n)
+        }
+        updateActiveConfig(_activeConfig.value.copy(buttons = combined))
+        _aiHudCandidates.value = emptyList()
+        showSnack("Confirmed and applied ${newNodes.size} AI-detected controls!")
+    }
+
+    fun dismissAiHudCandidates() {
+        _aiHudCandidates.value = emptyList()
+    }
+
+    fun runAiAssistant() {
+        viewModelScope.launch {
+            val suggestion = AiMappingAssistant.suggestMapping(
+                _activeConfig.value.gameTitle,
+                _controllerProfile.value.type,
+                _activeConfig.value
+            )
+            _aiMappingSuggestion.value = suggestion
+        }
+    }
+
+    fun applyAiAssistantSuggestion() {
+        val s = _aiMappingSuggestion.value ?: return
+        updateActiveConfig(_activeConfig.value.copy(buttons = s.nodes))
+        _aiMappingSuggestion.value = null
+        showSnack("Applied AI Recommended Mapping with ${s.estimatedLatencyMs}ms latency!")
+    }
+
+    fun dismissAiAssistant() {
+        _aiMappingSuggestion.value = null
+    }
+
+    fun runConfigDiff() {
+        viewModelScope.launch {
+            val freshCandidates = AiHudDetector.detectHudElements(null)
+            val diffList = ConfigDiffEngine.calculateDiff(_activeConfig.value, freshCandidates)
+            val result = ConfigDiffResult(
+                unchangedCount = diffList.count { it.status == DiffStatus.UNCHANGED },
+                movedNodes = diffList.filter { it.status == DiffStatus.MOVED },
+                missingNodes = diffList.filter { it.status == DiffStatus.MISSING },
+                newDetectedNodes = diffList.filter { it.status == DiffStatus.NEW_DETECTED }
+            )
+            _diffResult.value = result
+            showSnack("HUD Diff: ${result.movedNodes.size} moved, ${result.missingNodes.size} missing, ${result.newDetectedNodes.size} new")
+        }
+    }
+
+    fun applyDiffRepair() {
+        val diff = _diffResult.value ?: return
+        val allItems = diff.movedNodes + diff.missingNodes + diff.newDetectedNodes
+        val repaired = ConfigDiffEngine.repairExistingConfig(_activeConfig.value, allItems)
+        updateActiveConfig(repaired)
+        _diffResult.value = null
+        showSnack("Repaired config without rebuilding! Nodes shifted to match new HUD.")
+    }
+
+    fun dismissDiff() {
+        _diffResult.value = null
+    }
+
+    fun setPerformanceProfile(mode: PerformanceMode) {
+        val results = PerformanceDriverManager.setPerformanceMode(mode)
+        val passed = results.count { it.isSuccess }
+        showSnack("Performance Mode: ${mode.displayName} ($passed/${results.size} sysfs nodes applied)")
+    }
+
+    fun restoreStockPerformance() {
+        PerformanceDriverManager.restoreStock()
+        showSnack("Stock hardware snapshot restored.")
     }
 
     fun completeOnboarding() {

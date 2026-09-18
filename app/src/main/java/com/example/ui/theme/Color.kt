@@ -18,3 +18,6 @@ val AccentRose = Color(0xFFF43F5E)
 val TextPrimary = Color(0xFFF8FAFC)
 val TextSecondary = Color(0xFF94A3B8)
 val TextMuted = Color(0xFF64748B)
+
+val DarkTextPrimary = TextPrimary
+val DarkTextSecondary = TextSecondary

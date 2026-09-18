@@ -33,6 +33,8 @@ import com.example.ui.mapper.ScreenshotMapperScreen
 import com.example.ui.onboarding.OnboardingScreen
 import com.example.ui.overlay.FloatingOverlayHUD
 import com.example.ui.root.KernelSuWebUiScreen
+import com.example.ui.macro.MacroTimelineEditor
+import com.example.ui.safety.GameSafetyScreen
 import com.example.ui.theme.*
 import com.example.ui.vip.VipMonetizationScreen
 
@@ -139,6 +141,30 @@ class MainActivity : ComponentActivity() {
                                             Icons.Default.PowerSettingsNew,
                                             contentDescription = "Panic Kill",
                                             tint = AccentRose
+                                        )
+                                    }
+
+                                    // Macro Timeline Editor
+                                    IconButton(
+                                        onClick = { viewModel.selectTab("macro") },
+                                        modifier = Modifier.testTag("appbar_macro_button")
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Timeline,
+                                            contentDescription = "Macro Timeline",
+                                            tint = CyberCyan
+                                        )
+                                    }
+
+                                    // Anti-Cheat & Safety Hub
+                                    IconButton(
+                                        onClick = { viewModel.selectTab("safety") },
+                                        modifier = Modifier.testTag("appbar_safety_button")
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Security,
+                                            contentDescription = "Anti-Cheat Safety Hub",
+                                            tint = AccentGreen
                                         )
                                     }
 
@@ -274,6 +300,13 @@ class MainActivity : ComponentActivity() {
                                 "vip" -> VipMonetizationScreen(viewModel = viewModel)
                                 "root_webui" -> KernelSuWebUiScreen(
                                     viewModel = viewModel,
+                                    onBack = { viewModel.selectTab("library") }
+                                )
+                                "macro" -> MacroTimelineEditor(
+                                    onBack = { viewModel.selectTab("mapper") },
+                                    onSaveMacro = { viewModel.showSnack("Saved Macro: ${it.name}") }
+                                )
+                                "safety" -> GameSafetyScreen(
                                     onBack = { viewModel.selectTab("library") }
                                 )
                             }

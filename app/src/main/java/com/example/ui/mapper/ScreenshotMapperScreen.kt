@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import com.example.model.MappingConfig
 import com.example.model.MappingNode
 import com.example.model.NodeType
+import com.example.model.*
 import com.example.ui.MainAppViewModel
 import com.example.ui.theme.*
 import kotlin.math.hypot
@@ -97,24 +98,39 @@ fun ScreenshotMapperScreen(
                         )
                     }
 
+                    // AI Assistant Suggestion button
+                    IconButton(
+                        onClick = { viewModel.runAiAssistant() },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = ElectricViolet.copy(alpha = 0.2f)
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.Psychology,
+                            contentDescription = "AI Assistant",
+                            tint = ElectricViolet,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
                     // Auto-detect HUD button
                     IconButton(
-                        onClick = { viewModel.runAutoDetectHud() },
+                        onClick = { viewModel.runAiHudScan() },
                         colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = ElectricViolet.copy(alpha = 0.15f)
+                            containerColor = CyberCyan.copy(alpha = 0.15f)
                         )
                     ) {
                         Icon(
                             Icons.Default.AutoFixHigh,
                             contentDescription = "Auto Detect",
-                            tint = ElectricViolet,
+                            tint = CyberCyan,
                             modifier = Modifier.size(20.dp)
                         )
                     }
 
                     // Diff Mode toggle
                     IconButton(
-                        onClick = { isDiffMode = !isDiffMode },
+                        onClick = { viewModel.runConfigDiff() },
                         colors = IconButtonDefaults.iconButtonColors(
                             containerColor = if (isDiffMode) AccentAmber.copy(alpha = 0.2f) else Color.Transparent
                         )
@@ -123,6 +139,21 @@ fun ScreenshotMapperScreen(
                             Icons.Default.Compare,
                             contentDescription = "Diff HUD",
                             tint = if (isDiffMode) AccentAmber else TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    // Emergency Panic Kill-Switch
+                    IconButton(
+                        onClick = { viewModel.triggerPanicKillSwitch() },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = AccentRose.copy(alpha = 0.2f)
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.FlashOff,
+                            contentDescription = "Panic Kill Switch",
+                            tint = AccentRose,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -505,6 +536,177 @@ fun ScreenshotMapperScreen(
             dismissButton = {
                 TextButton(onClick = { showAddNodeDialog = false }) {
                     Text("Cancel", color = TextSecondary)
+                }
+            },
+            containerColor = DarkSurfaceElevated
+        )
+    }
+
+    // AI HUD Candidates Review Dialog
+    val aiCandidates by viewModel.aiHudCandidates.collectAsState()
+    if (aiCandidates.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissAiHudCandidates() },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.AutoFixHigh, contentDescription = null, tint = CyberCyan)
+                    Spacer(Modifier.width(8.dp))
+                    Text("AI HUD Review (${aiCandidates.size} Elements)", color = CyberCyan, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "AI Vision analyzed the HUD layout and detected the following controls. Confirm or reject bindings:",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                    aiCandidates.forEach { candidate ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+                            border = BorderStroke(1.dp, DarkSurfaceBorder)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(candidate.predictedAction, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = TextPrimary)
+                                    Text("Confidence ${(candidate.confidence * 100).toInt()}% • Pos: (${(candidate.xNorm * 100).toInt()}%, ${(candidate.yNorm * 100).toInt()}%)", fontSize = 10.sp, color = TextSecondary)
+                                }
+                                Surface(
+                                    color = CyberCyan,
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        candidate.recommendedKey,
+                                        color = Color(0xFF00363D),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.confirmAiHudCandidates(aiCandidates) },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyberCyan)
+                ) {
+                    Text("Apply All Detected", color = Color(0xFF00363D), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissAiHudCandidates() }) {
+                    Text("Cancel", color = TextSecondary)
+                }
+            },
+            containerColor = DarkSurfaceElevated
+        )
+    }
+
+    // AI Mapping Assistant Suggestion Dialog
+    val aiSuggestionState = viewModel.aiMappingSuggestion.collectAsState()
+    val s = aiSuggestionState.value
+    if (s != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissAiAssistant() },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Psychology, contentDescription = null, tint = ElectricViolet)
+                    Spacer(Modifier.width(8.dp))
+                    Text("AI Mapping Assistant", color = ElectricViolet, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Optimized layout for ${s.gameTitle} using ${s.targetController.displayName}:",
+                        fontSize = 12.sp,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(s.rationale, fontSize = 11.sp, color = TextSecondary)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Est. Injection Latency:", fontSize = 11.sp, color = TextSecondary)
+                        Text("${s.estimatedLatencyMs} ms", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AccentGreen)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total Mapped Nodes:", fontSize = 11.sp, color = TextSecondary)
+                        Text("${s.nodes.size} controls", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = CyberCyan)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.applyAiAssistantSuggestion() },
+                    colors = ButtonDefaults.buttonColors(containerColor = ElectricViolet)
+                ) {
+                    Text("Apply Suggestion", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissAiAssistant() }) {
+                    Text("Dismiss", color = TextSecondary)
+                }
+            },
+            containerColor = DarkSurfaceElevated
+        )
+    }
+
+    // Config Diff Repair Dialog
+    val diffResultState = viewModel.diffResult.collectAsState()
+    val diff = diffResultState.value
+    if (diff != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissDiff() },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Compare, contentDescription = null, tint = AccentAmber)
+                    Spacer(Modifier.width(8.dp))
+                    Text("HUD Diff Analysis", color = AccentAmber, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Compared existing config against new HUD screenshot:",
+                        fontSize = 12.sp,
+                        color = TextPrimary
+                    )
+                    Text("• Unchanged Controls: ${diff.unchangedCount}", fontSize = 11.sp, color = AccentGreen)
+                    Text("• Moved Controls: ${diff.movedNodes.size}", fontSize = 11.sp, color = AccentAmber)
+                    Text("• Missing/Relocated: ${diff.missingNodes.size}", fontSize = 11.sp, color = AccentRose)
+                    Text("• Newly Detected: ${diff.newDetectedNodes.size}", fontSize = 11.sp, color = CyberCyan)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "Tap 'Repair Config' to automatically shift moved controls to their new positions without losing your existing key bindings.",
+                        fontSize = 10.sp,
+                        color = TextSecondary
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.applyDiffRepair() },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentAmber)
+                ) {
+                    Text("Repair Config", color = Color(0xFF2A1C0A), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.dismissDiff() }) {
+                    Text("Dismiss", color = TextSecondary)
                 }
             },
             containerColor = DarkSurfaceElevated
