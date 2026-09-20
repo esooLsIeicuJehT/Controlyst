@@ -1,21 +1,17 @@
 package com.example.injector
 
-import android.content.pm.PackageManager
 import android.graphics.PointF
 import android.util.Log
 import com.example.model.PrivilegeMethod
-import rikka.shizuku.Shizuku
 
 class ShizukuInjector : InputInjector {
     override val method: PrivilegeMethod = PrivilegeMethod.SHIZUKU
 
     override fun isAvailable(): Boolean {
-        return try {
-            if (!Shizuku.pingBinder()) return false
-            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return false
-            true
-        } catch (e: Exception) {
-            false
+        val result = RootController.verifyShizukuAvailable()
+        return when (result) {
+            is ShellResult.Success -> result.data
+            is ShellResult.Failure -> false
         }
     }
 
@@ -47,14 +43,13 @@ class ShizukuInjector : InputInjector {
     }
 
     private fun executeRishCommand(command: String): Boolean {
-        return try {
-            // Using Shizuku rish ADB shell bridge
-            val process = Runtime.getRuntime().exec(arrayOf("rish", "-c", command))
-            val exitCode = process.waitFor()
-            exitCode == 0
-        } catch (e: Exception) {
-            Log.e("ShizukuInjector", "Failed to execute rish command: ${e.message}", e)
-            false
+        val result = RootController.executeShizukuCommand(command)
+        return when (result) {
+            is ShellResult.Success -> true
+            is ShellResult.Failure -> {
+                Log.e("ShizukuInjector", "Failed to execute rish command: ${result.message}", result.exception)
+                false
+            }
         }
     }
 

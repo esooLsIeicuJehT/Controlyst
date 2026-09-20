@@ -3,28 +3,15 @@ package com.example.injector
 import android.graphics.PointF
 import android.util.Log
 import com.example.model.PrivilegeMethod
-import java.io.File
 
 class MagiskInjector : InputInjector {
     override val method: PrivilegeMethod = PrivilegeMethod.MAGISK
 
     override fun isAvailable(): Boolean {
-        return try {
-            val paths = listOf(
-                "/system/xbin/su",
-                "/system/bin/su",
-                "/sbin/su",
-                "/data/local/xbin/su",
-                "/data/local/bin/su"
-            )
-            val suFound = paths.any { File(it).exists() }
-            if (!suFound) return false
-            // Verify su binary actually executes successfully
-            val p = Runtime.getRuntime().exec(arrayOf("su", "-c", "id"))
-            val exitCode = p.waitFor()
-            exitCode == 0
-        } catch (e: Exception) {
-            false
+        val result = RootController.verifyRootAvailable()
+        return when (result) {
+            is ShellResult.Success -> result.data
+            is ShellResult.Failure -> false
         }
     }
 
@@ -47,13 +34,13 @@ class MagiskInjector : InputInjector {
     }
 
     private fun executeSu(command: String): Boolean {
-        return try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-            val exitCode = process.waitFor()
-            exitCode == 0
-        } catch (e: Exception) {
-            Log.e("MagiskInjector", "Magisk su execution failed: ${e.message}", e)
-            false
+        val result = RootController.executeSuCommand(command)
+        return when (result) {
+            is ShellResult.Success -> true
+            is ShellResult.Failure -> {
+                Log.e("MagiskInjector", "Magisk su execution failed: ${result.message}", result.exception)
+                false
+            }
         }
     }
 

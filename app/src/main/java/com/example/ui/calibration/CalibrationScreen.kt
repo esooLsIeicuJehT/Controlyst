@@ -175,6 +175,7 @@ fun CalibrationScreen(
                 Spacer(Modifier.height(14.dp))
                 Button(
                     onClick = {
+                        if (isCalibratingStick) return@Button
                         isCalibratingStick = true
                         coroutineScope.launch {
                             viewModel.calibrationManager.runStickCalibration {
@@ -194,6 +195,24 @@ fun CalibrationScreen(
                         color = Color(0xFF00363D),
                         fontWeight = FontWeight.Bold
                     )
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                Button(
+                    onClick = {
+                        viewModel.saveCalibrationToRoom(
+                            stickState.computedInnerDeadzone,
+                            stickState.computedOuterDeadzone
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = ControlystViolet),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Save, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Save Calibration to Room DB", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }

@@ -55,6 +55,10 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
     val privilegeDetector = PrivilegeDetector(application)
     val calibrationManager = CalibrationManager(application)
     val monetizationManager = MonetizationManager(application)
+    val firebaseRepository = com.example.data.FirebaseRepository(application)
+
+    private val _authState = MutableStateFlow(firebaseRepository.currentUser)
+    val authState: StateFlow<com.google.firebase.auth.FirebaseUser?> = _authState.asStateFlow()
 
     // AI & HUD Recognition States
     private val _aiHudCandidates = MutableStateFlow<List<AiHudCandidate>>(emptyList())
@@ -71,6 +75,44 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
 
     init {
         PerformanceDriverManager.initialize()
+        viewModelScope.launch {
+            firebaseRepository.authStateFlow().collect { user ->
+                _authState.value = user
+            }
+        }
+    }
+
+    fun signInWithGoogle() {
+        viewModelScope.launch {
+            val result = firebaseRepository.signInWithGoogleCredential()
+            result.onSuccess { user ->
+                showSnack("Signed in as ${user.email ?: user.displayName}")
+            }.onFailure { err ->
+                showSnack("Google Sign-In failed: ${err.localizedMessage}")
+            }
+        }
+    }
+
+    fun signOutFirebase() {
+        firebaseRepository.signOut()
+        showSnack("Signed out from Firebase.")
+    }
+
+    fun syncActiveConfigToFirestore() {
+        val user = _authState.value
+        if (user == null) {
+            showSnack("Please sign in with Google first to sync with Firestore.")
+            return
+        }
+        viewModelScope.launch {
+            val cfg = _activeConfig.value
+            val result = firebaseRepository.syncConfigToFirestore(user.uid, cfg)
+            result.onSuccess {
+                showSnack("Profile '${cfg.profileName}' successfully synced to Firestore!")
+            }.onFailure { err ->
+                showSnack("Firestore sync failed: ${err.localizedMessage}")
+            }
+        }
     }
 
     // Games and Profiles Flow
@@ -444,5 +486,24 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
 
     fun restartOnboarding() {
         _onboardingStep.value = 0
+    }
+
+    fun startStickCalibration() {
+        viewModelScope.launch {
+            calibrationManager.runStickCalibration { state ->
+                // state updated via calibrationManager flow
+            }
+        }
+    }
+
+    fun saveCalibrationToRoom(innerDZ: Float, outerDZ: Float) {
+        val currentCfg = _activeConfig.value
+        val updatedJoystick = currentCfg.joystick.copy(
+            innerDeadzone = innerDZ,
+            outerDeadzone = outerDZ
+        )
+        val updatedCfg = currentCfg.copy(joystick = updatedJoystick)
+        updateActiveConfig(updatedCfg)
+        showSnack("Calibration saved to Room database successfully!")
     }
 }

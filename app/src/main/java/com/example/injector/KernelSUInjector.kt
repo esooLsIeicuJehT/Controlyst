@@ -3,22 +3,15 @@ package com.example.injector
 import android.graphics.PointF
 import android.util.Log
 import com.example.model.PrivilegeMethod
-import java.io.File
 
 class KernelSUInjector : InputInjector {
     override val method: PrivilegeMethod = PrivilegeMethod.KERNELSU
 
     override fun isAvailable(): Boolean {
-        return try {
-            val ksuDaemon = File("/data/adb/ksud")
-            val ksuDir = File("/data/adb/ksu")
-            val ksuSocket = File("/dev/ksu_daemon")
-            if (!ksuDaemon.exists() && !ksuDir.exists() && !ksuSocket.exists()) return false
-
-            val p = Runtime.getRuntime().exec(arrayOf("su", "-c", "ksu -v || id"))
-            p.waitFor() == 0
-        } catch (e: Exception) {
-            false
+        val result = RootController.verifyRootAvailable()
+        return when (result) {
+            is ShellResult.Success -> result.data
+            is ShellResult.Failure -> false
         }
     }
 
@@ -41,12 +34,13 @@ class KernelSUInjector : InputInjector {
     }
 
     private fun executeKsuCommand(command: String): Boolean {
-        return try {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-            process.waitFor() == 0
-        } catch (e: Exception) {
-            Log.e("KernelSUInjector", "KernelSU command execution failed: ${e.message}", e)
-            false
+        val result = RootController.executeSuCommand(command)
+        return when (result) {
+            is ShellResult.Success -> true
+            is ShellResult.Failure -> {
+                Log.e("KernelSUInjector", "KernelSU command execution failed: ${result.message}", result.exception)
+                false
+            }
         }
     }
 

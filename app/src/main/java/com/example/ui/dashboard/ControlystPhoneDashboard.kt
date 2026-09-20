@@ -141,6 +141,11 @@ fun ControlystPhoneDashboard(
 
         Spacer(Modifier.height(14.dp))
 
+        // 1.5 Firebase Cloud Sync & Auth Card
+        FirebaseCloudSyncCard(viewModel = viewModel)
+
+        Spacer(Modifier.height(14.dp))
+
         // 2. Telemetry Card (Engineered 2x4 Metric Grid)
         Card(
             modifier = Modifier
@@ -546,5 +551,117 @@ private fun StatusPill(
             letterSpacing = 0.8.sp,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
         )
+    }
+}
+
+@Composable
+fun FirebaseCloudSyncCard(viewModel: MainAppViewModel) {
+    val authState by viewModel.authState.collectAsState()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("firebase_cloud_sync_card"),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        border = BorderStroke(1.dp, DarkSurfaceBorder)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Cloud,
+                        contentDescription = "Cloud",
+                        tint = ControlystCyan,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = "Firebase Cloud & Auth",
+                        color = TextPrimary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                StatusPill(
+                    label = if (authState != null) "AUTH ACTIVE" else "GUEST",
+                    accentColor = if (authState != null) ControlystGreen else TextMuted
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            if (authState != null) {
+                Text(
+                    text = "Signed in as: ${authState?.email ?: authState?.displayName ?: "Google User"} (UID: ${authState?.uid?.take(8)}...)",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = { viewModel.syncActiveConfigToFirestore() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(40.dp)
+                            .testTag("firestore_sync_button"),
+                        colors = ButtonDefaults.buttonColors(containerColor = ControlystViolet),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Sync to Firestore", fontSize = 12.sp)
+                    }
+
+                    OutlinedButton(
+                        onClick = { viewModel.signOutFirebase() },
+                        modifier = Modifier
+                            .height(40.dp)
+                            .testTag("firebase_signout_button"),
+                        border = BorderStroke(1.dp, DarkSurfaceBorder),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Sign Out", color = TextSecondary, fontSize = 12.sp)
+                    }
+                }
+            } else {
+                Text(
+                    text = "Securely identify with Google Sign-In and persist your custom mapping profiles to Cloud Firestore.",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = { viewModel.signInWithGoogle() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .testTag("google_signin_button"),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = "Google",
+                        tint = Color.Black,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Sign in with Google",
+                        color = Color.Black,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
     }
 }
