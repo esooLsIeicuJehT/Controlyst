@@ -26,8 +26,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.CrosshairConfig
 import com.example.model.CrosshairShape
+import com.example.service.MappingForegroundService
 import com.example.ui.MainAppViewModel
 import com.example.ui.theme.*
+
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun CrosshairStudioScreen(
@@ -35,6 +41,8 @@ fun CrosshairStudioScreen(
 ) {
     val activeConfig by viewModel.activeConfig.collectAsState()
     val crosshair = activeConfig.crosshair
+    val context = LocalContext.current
+    var hasOverlayPermission by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
 
     Column(
         modifier = Modifier
@@ -50,38 +58,63 @@ fun CrosshairStudioScreen(
             colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
             border = BorderStroke(1.dp, if (crosshair.isEnabled) CyberCyan else DarkSurfaceBorder)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(CyberCyan.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.CenterFocusStrong, contentDescription = null, tint = CyberCyan)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(CyberCyan.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.CenterFocusStrong, contentDescription = null, tint = CyberCyan)
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column {
+                            Text("Crosshair HUD Reticle", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 16.sp)
+                            Text("Always-on-top tactical reticle", color = TextSecondary, fontSize = 12.sp)
+                        }
                     }
-                    Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text("Crosshair HUD Reticle", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 16.sp)
-                        Text("Always-on-top tactical reticle", color = TextSecondary, fontSize = 12.sp)
-                    }
+
+                    Switch(
+                        checked = crosshair.isEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled && !Settings.canDrawOverlays(context)) {
+                                viewModel.showSnack("Please grant 'Display over other apps' permission.")
+                                val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+                                context.startActivity(intent)
+                            } else {
+                                viewModel.updateCrosshair(crosshair.copy(isEnabled = enabled))
+                                MappingForegroundService.currentCrosshairConfig.value = crosshair.copy(isEnabled = enabled)
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = CyberCyan,
+                            checkedTrackColor = CyberCyan.copy(alpha = 0.3f)
+                        )
+                    )
                 }
 
-                Switch(
-                    checked = crosshair.isEnabled,
-                    onCheckedChange = { viewModel.updateCrosshair(crosshair.copy(isEnabled = it)) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = CyberCyan,
-                        checkedTrackColor = CyberCyan.copy(alpha = 0.3f)
-                    )
-                )
+                if (!hasOverlayPermission) {
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = CyberCyan)
+                    ) {
+                        Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Grant 'Display Over Other Apps' Permission", fontSize = 12.sp)
+                    }
+                }
             }
         }
 

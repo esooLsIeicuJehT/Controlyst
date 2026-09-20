@@ -1,5 +1,6 @@
 package com.example.service
 
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,6 +15,7 @@ import com.example.MainActivity
 import com.example.R
 import com.example.injector.InputInjector
 import com.example.injector.InputInjectorFactory
+import com.example.injector.PrivilegeDetector
 import com.example.model.MappingConfig
 import com.example.model.PrivilegeMethod
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +26,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+import com.example.model.CrosshairConfig
 
 class MappingForegroundService : Service() {
 
@@ -46,6 +50,8 @@ class MappingForegroundService : Service() {
         private val _isOverlayVisible = MutableStateFlow(true)
         val isOverlayVisible: StateFlow<Boolean> = _isOverlayVisible.asStateFlow()
 
+        val currentCrosshairConfig = MutableStateFlow(CrosshairConfig())
+
         fun setOverlayVisibility(visible: Boolean) {
             _isOverlayVisible.value = visible
         }
@@ -61,6 +67,7 @@ class MappingForegroundService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Default)
     private var exitWatcherJob: Job? = null
     private var activeInjector: InputInjector? = null
+    private var crosshairOverlayManager: CrosshairOverlayManager? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -98,15 +105,34 @@ class MappingForegroundService : Service() {
         val notification = buildNotification(gamePkg)
         startForeground(NOTIFICATION_ID, notification)
 
-        // Initialize active injector
-        activeInjector = InputInjectorFactory.createInjector(PrivilegeMethod.ACCESSIBILITY)
+        // Initialize active injector using dynamic PrivilegeDetector best method
+        val bestMethod = PrivilegeDetector(this).detectBestMethod()
+        activeInjector = InputInjectorFactory.createInjector(bestMethod)
+
+        // Start floating crosshair overlay manager if permitted
+        if (android.provider.Settings.canDrawOverlays(this)) {
+            crosshairOverlayManager?.hideOverlay()
+            crosshairOverlayManager = CrosshairOverlayManager(this).apply {
+                showOverlay(currentCrosshairConfig)
+            }
+        }
 
         // Start background game exit monitoring (checks if game process is alive)
         exitWatcherJob?.cancel()
         exitWatcherJob = serviceScope.launch {
+            val am = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
             while (_isServiceActive.value) {
                 delay(4000)
-                // In actual execution, UsageStatsManager or ActivityLifecycle checks if game is in foreground
+                am?.runningAppProcesses?.let { processes ->
+                    val isRunning = processes.any { it.processName == gamePkg || it.pkgList?.contains(gamePkg) == true }
+                    // If target game process is no longer running in foreground/background, auto-stop mapping
+                    if (!isRunning && processes.isNotEmpty()) {
+                        // Game exited
+                        stopMapping()
+                        stopSelf()
+                        break
+                    }
+                }
             }
         }
     }
@@ -117,6 +143,8 @@ class MappingForegroundService : Service() {
         exitWatcherJob?.cancel()
         activeInjector?.cleanup()
         activeInjector = null
+        crosshairOverlayManager?.hideOverlay()
+        crosshairOverlayManager = null
     }
 
     override fun onDestroy() {

@@ -9,7 +9,6 @@ import org.json.JSONObject
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -44,56 +43,94 @@ object LocalBackupManager {
             }
             writeStringToZip(zos, "metadata.json", metaJson.toString(2))
 
-            // 2. profiles/
+            // 2. profiles/ with complete MappingConfig payload
             configs.forEach { cfg ->
                 val cfgJson = JSONObject().apply {
+                    put("schemaVersion", cfg.schemaVersion)
                     put("id", cfg.id)
                     put("profileName", cfg.profileName)
                     put("gamePackage", cfg.gamePackage)
                     put("gameTitle", cfg.gameTitle)
                     put("controllerType", cfg.controllerType.name)
                     put("targetAspectRatio", cfg.targetAspectRatio)
-                    put("buttonCount", cfg.buttons.size)
+                    put("antiRecoilEnabled", cfg.antiRecoilEnabled)
+                    put("antiRecoilVerticalPull", cfg.antiRecoilVerticalPull)
+                    put("author", cfg.author)
+                    put("isOfficialVerified", cfg.isOfficialVerified)
+                    put("downloadCount", cfg.downloadCount)
+                    put("rating", cfg.rating)
+                    put("lastUpdated", cfg.lastUpdated)
+
+                    // Joystick settings
+                    put("joystick", JSONObject().apply {
+                        put("innerDeadzone", cfg.joystick.innerDeadzone)
+                        put("outerDeadzone", cfg.joystick.outerDeadzone)
+                        put("runThresholdNorm", cfg.joystick.runThresholdNorm)
+                        put("sprintLockEnabled", cfg.joystick.sprintLockEnabled)
+                        put("curveExponent", cfg.joystick.curveExponent)
+                    })
+
+                    // Camera settings
+                    put("camera", JSONObject().apply {
+                        put("horizontalSensitivity", cfg.camera.horizontalSensitivity)
+                        put("verticalSensitivity", cfg.camera.verticalSensitivity)
+                        put("accelerationCurve", cfg.camera.accelerationCurve)
+                        put("smoothingFrames", cfg.camera.smoothingFrames)
+                        put("invertY", cfg.camera.invertY)
+                        put("mouseDpiScale", cfg.camera.mouseDpiScale)
+                    })
+
+                    // Buttons and nodes array
+                    val nodesArray = JSONArray()
+                    cfg.buttons.forEach { node ->
+                        val nodeObj = JSONObject().apply {
+                            put("id", node.id)
+                            put("xNorm", node.xNorm)
+                            put("yNorm", node.yNorm)
+                            put("radiusNorm", node.radiusNorm)
+                            put("type", node.type.name)
+                            put("boundKey", node.boundKey)
+                            put("label", node.label)
+                            put("turboHz", node.turboHz)
+                            put("deadzoneInner", node.deadzoneInner)
+                            put("deadzoneOuter", node.deadzoneOuter)
+                            put("sensitivity", node.sensitivity)
+
+                            val macroArray = JSONArray()
+                            node.macroActions.forEach { step ->
+                                macroArray.put(JSONObject().apply {
+                                    put("delayMs", step.delayMs)
+                                    put("actionType", step.actionType)
+                                    put("xNorm", step.xNorm)
+                                    put("yNorm", step.yNorm)
+                                    put("durationMs", step.durationMs)
+                                })
+                            }
+                            put("macroActions", macroArray)
+                        }
+                        nodesArray.put(nodeObj)
+                    }
+                    put("buttons", nodesArray)
+
+                    // Crosshair config
+                    put("crosshair", JSONObject().apply {
+                        put("isEnabled", cfg.crosshair.isEnabled)
+                        put("shape", cfg.crosshair.shape.name)
+                        put("sizeDp", cfg.crosshair.sizeDp)
+                        put("thicknessDp", cfg.crosshair.thicknessDp)
+                        put("gapDp", cfg.crosshair.gapDp)
+                        put("colorHex", cfg.crosshair.colorHex)
+                        put("opacity", cfg.crosshair.opacity)
+                        put("outlineEnabled", cfg.crosshair.outlineEnabled)
+                        put("outlineColorHex", cfg.crosshair.outlineColorHex)
+                        put("outlineThicknessDp", cfg.crosshair.outlineThicknessDp)
+                        put("offsetX", cfg.crosshair.offsetX)
+                        put("offsetY", cfg.crosshair.offsetY)
+                        put("dynamicSpread", cfg.crosshair.dynamicSpread)
+                    })
                 }
                 writeStringToZip(zos, "profiles/${cfg.id}.json", cfgJson.toString(2))
             }
-
-            // 3. controllers/
-            val controllersJson = JSONObject().apply {
-                put("calibratedTypes", JSONArray(listOf("XBOX", "DUALSENSE", "STADIA", "SWITCH_PRO")))
-                put("defaultInnerDeadzone", 0.15)
-                put("defaultOuterDeadzone", 0.95)
-            }
-            writeStringToZip(zos, "controllers/calibrations.json", controllersJson.toString(2))
-
-            // 4. macros/
-            val macrosJson = JSONObject().apply {
-                put("savedMacros", JSONArray())
-                put("macroSafetyNotice", "Automated rapid-fire loops may violate online game TOS.")
-            }
-            writeStringToZip(zos, "macros/macros_library.json", macrosJson.toString(2))
-
-            // 5. settings/
-            val settingsJson = JSONObject().apply {
-                put("overlayOpacity", 0.85)
-                put("hapticsEnabled", true)
-                put("floatingHudSize", "MEDIUM")
-            }
-            writeStringToZip(zos, "settings/app_preferences.json", settingsJson.toString(2))
-
-            // 6. game_profiles/
-            val gameProfilesJson = JSONObject().apply {
-                put("linkedGameProfilesCount", configs.size)
-            }
-            writeStringToZip(zos, "game_profiles/game_bindings.json", gameProfilesJson.toString(2))
-
-            // 7. performance_profiles/
-            val perfProfilesJson = JSONObject().apply {
-                put("activeMode", "GAMING")
-                put("thermalLimitC", 42.0)
-                put("autoGameSwitchingEnabled", true)
-            }
-            writeStringToZip(zos, "performance_profiles/root_performance.json", perfProfilesJson.toString(2))
         }
 
         backupZip

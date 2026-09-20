@@ -1,62 +1,64 @@
 package com.example.injector
 
+import android.content.pm.PackageManager
 import android.graphics.PointF
 import android.util.Log
 import com.example.model.PrivilegeMethod
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.io.OutputStream
+import rikka.shizuku.Shizuku
 
 class ShizukuInjector : InputInjector {
     override val method: PrivilegeMethod = PrivilegeMethod.SHIZUKU
 
-    private val scope = CoroutineScope(Dispatchers.IO)
-    private var isSimulatedAdb: Boolean = false
-
     override fun isAvailable(): Boolean {
-        // Checks Shizuku service availability via package check or binder
         return try {
-            val process = Runtime.getRuntime().exec("sh -c 'which rish || which shizuku'")
-            process.waitFor() == 0
+            if (!Shizuku.pingBinder()) return false
+            if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) return false
+            true
         } catch (e: Exception) {
             false
         }
     }
 
     override fun injectTap(x: Float, y: Float): Boolean {
-        val cmd = "input tap ${x.toInt()} ${y.toInt()}\n"
-        executeAdbCommand(cmd)
-        return true
+        if (!isAvailable()) {
+            throw IllegalStateException("Shizuku service is not running or permission not granted.")
+        }
+        val cmd = "input tap ${x.toInt()} ${y.toInt()}"
+        return executeRishCommand(cmd)
     }
 
     override fun injectDrag(path: List<PointF>, durationMs: Long): Boolean {
+        if (!isAvailable()) {
+            throw IllegalStateException("Shizuku service is not running or permission not granted.")
+        }
         if (path.size < 2) return false
         val start = path.first()
         val end = path.last()
-        val cmd = "input swipe ${start.x.toInt()} ${start.y.toInt()} ${end.x.toInt()} ${end.y.toInt()} $durationMs\n"
-        executeAdbCommand(cmd)
-        return true
+        val cmd = "input swipe ${start.x.toInt()} ${start.y.toInt()} ${end.x.toInt()} ${end.y.toInt()} $durationMs"
+        return executeRishCommand(cmd)
     }
 
     override fun injectKeyEvent(keyCode: Int, action: Int): Boolean {
-        val cmd = "input keyevent $keyCode\n"
-        executeAdbCommand(cmd)
-        return true
+        if (!isAvailable()) {
+            throw IllegalStateException("Shizuku service is not running or permission not granted.")
+        }
+        val cmd = "input keyevent $keyCode"
+        return executeRishCommand(cmd)
     }
 
-    private fun executeAdbCommand(command: String) {
-        scope.launch {
-            try {
-                val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", command))
-                process.waitFor()
-            } catch (e: Exception) {
-                Log.d("ShizukuInjector", "Executed via Shizuku ADB channel: $command (fallback: ${e.message})")
-            }
+    private fun executeRishCommand(command: String): Boolean {
+        return try {
+            // Using Shizuku rish ADB shell bridge
+            val process = Runtime.getRuntime().exec(arrayOf("rish", "-c", command))
+            val exitCode = process.waitFor()
+            exitCode == 0
+        } catch (e: Exception) {
+            Log.e("ShizukuInjector", "Failed to execute rish command: ${e.message}", e)
+            false
         }
     }
 
     override fun cleanup() {
-        Log.d("ShizukuInjector", "Shizuku ADB injector resources cleaned up")
+        Log.d("ShizukuInjector", "Shizuku rish injector session closed")
     }
 }

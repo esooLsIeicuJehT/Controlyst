@@ -111,7 +111,7 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
         private set
 
     // Onboarding step (0..5), if completed = -1
-    private val _onboardingStep = MutableStateFlow(0)
+    private val _onboardingStep = MutableStateFlow(-1)
     val onboardingStep: StateFlow<Int> = _onboardingStep.asStateFlow()
 
     // Current navigation tab: "library", "mapper", "crosshair", "calibration", "community", "vip"
@@ -241,6 +241,7 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
     fun updateCrosshair(crosshair: CrosshairConfig) {
         val updated = _activeConfig.value.copy(crosshair = crosshair)
         updateActiveConfig(updated)
+        MappingForegroundService.currentCrosshairConfig.value = crosshair
     }
 
     // Node editing functions
